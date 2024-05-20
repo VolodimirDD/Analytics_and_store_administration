@@ -1,0 +1,533 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+  <!-- EF Runtime content -->
+  <edmx:Runtime>
+    <!-- SSDL content -->
+    <edmx:StorageModels>
+      <Schema Namespace="Хранилище DBModel" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+        <EntityType Name="Зміст_реалізації">
+          <Key>
+            <PropertyRef Name="ID_зміст_реал" />
+          </Key>
+          <Property Name="ID_зміст_реал" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="ID_покупки" Type="int" />
+          <Property Name="Кількість" Type="int" />
+          <Property Name="ID_товару" Type="int" />
+        </EntityType>
+        <EntityType Name="Користувачі">
+          <Key>
+            <PropertyRef Name="ID_користувача" />
+          </Key>
+          <Property Name="ID_користувача" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Логін" Type="nvarchar" MaxLength="255" Nullable="false" />
+          <Property Name="Захешований_пароль" Type="nvarchar" MaxLength="255" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Магазини">
+          <Key>
+            <PropertyRef Name="ID_магазину" />
+          </Key>
+          <Property Name="ID_магазину" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Адреса" Type="nvarchar" MaxLength="255" />
+          <Property Name="Телефон" Type="nvarchar" MaxLength="20" />
+        </EntityType>
+        <EntityType Name="Матеріали">
+          <Key>
+            <PropertyRef Name="ID_матеріалу" />
+          </Key>
+          <Property Name="ID_матеріалу" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Найменування" Type="nvarchar" MaxLength="255" />
+        </EntityType>
+        <EntityType Name="Реалізація">
+          <Key>
+            <PropertyRef Name="ID_покупки" />
+          </Key>
+          <Property Name="ID_покупки" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Дата" Type="date" />
+          <Property Name="ID_магазину" Type="int" />
+        </EntityType>
+        <EntityType Name="Товар">
+          <Key>
+            <PropertyRef Name="ID_товару" />
+          </Key>
+          <Property Name="ID_товару" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Назва" Type="nvarchar" MaxLength="255" />
+          <Property Name="Ціна" Type="int" />
+          <Property Name="Розмір" Type="nvarchar" MaxLength="20" />
+          <Property Name="ID_товарної_групи" Type="int" />
+          <Property Name="ID_пори_року" Type="int" />
+          <Property Name="ID_категорії" Type="int" />
+          <Property Name="ID_матеріалу" Type="int" />
+        </EntityType>
+        <EntityType Name="Товар_по_категоріям">
+          <Key>
+            <PropertyRef Name="ID_категорії" />
+          </Key>
+          <Property Name="ID_категорії" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Найменування" Type="nvarchar" MaxLength="255" />
+        </EntityType>
+        <EntityType Name="Товар_по_порам_року">
+          <Key>
+            <PropertyRef Name="ID_пори_року" />
+          </Key>
+          <Property Name="ID_пори_року" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Найменування" Type="nvarchar" MaxLength="255" />
+        </EntityType>
+        <EntityType Name="Товарна_група">
+          <Key>
+            <PropertyRef Name="ID_товар_групи" />
+          </Key>
+          <Property Name="ID_товар_групи" Type="int" StoreGeneratedPattern="Identity" Nullable="false" />
+          <Property Name="Найменування" Type="nvarchar" MaxLength="255" />
+        </EntityType>
+        <Association Name="FK__Зміст_реа__ID_по__53D770D6">
+          <End Role="Реалізація" Type="Self.Реалізація" Multiplicity="0..1" />
+          <End Role="Зміст_реалізації" Type="Self.Зміст_реалізації" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Реалізація">
+              <PropertyRef Name="ID_покупки" />
+            </Principal>
+            <Dependent Role="Зміст_реалізації">
+              <PropertyRef Name="ID_покупки" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK__Зміст_реа__ID_то__54CB950F">
+          <End Role="Товар" Type="Self.Товар" Multiplicity="0..1" />
+          <End Role="Зміст_реалізації" Type="Self.Зміст_реалізації" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Товар">
+              <PropertyRef Name="ID_товару" />
+            </Principal>
+            <Dependent Role="Зміст_реалізації">
+              <PropertyRef Name="ID_товару" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK__Реалізаці__ID_ма__4B422AD5">
+          <End Role="Магазини" Type="Self.Магазини" Multiplicity="0..1" />
+          <End Role="Реалізація" Type="Self.Реалізація" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Магазини">
+              <PropertyRef Name="ID_магазину" />
+            </Principal>
+            <Dependent Role="Реалізація">
+              <PropertyRef Name="ID_магазину" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK__Товар__ID_катего__5006DFF2">
+          <End Role="Товар_по_категоріям" Type="Self.Товар_по_категоріям" Multiplicity="0..1" />
+          <End Role="Товар" Type="Self.Товар" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Товар_по_категоріям">
+              <PropertyRef Name="ID_категорії" />
+            </Principal>
+            <Dependent Role="Товар">
+              <PropertyRef Name="ID_категорії" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK__Товар__ID_матері__50FB042B">
+          <End Role="Матеріали" Type="Self.Матеріали" Multiplicity="0..1" />
+          <End Role="Товар" Type="Self.Товар" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Матеріали">
+              <PropertyRef Name="ID_матеріалу" />
+            </Principal>
+            <Dependent Role="Товар">
+              <PropertyRef Name="ID_матеріалу" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK__Товар__ID_пори_р__4F12BBB9">
+          <End Role="Товар_по_порам_року" Type="Self.Товар_по_порам_року" Multiplicity="0..1" />
+          <End Role="Товар" Type="Self.Товар" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Товар_по_порам_року">
+              <PropertyRef Name="ID_пори_року" />
+            </Principal>
+            <Dependent Role="Товар">
+              <PropertyRef Name="ID_пори_року" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK__Товар__ID_товарн__4E1E9780">
+          <End Role="Товарна_група" Type="Self.Товарна_група" Multiplicity="0..1" />
+          <End Role="Товар" Type="Self.Товар" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Товарна_група">
+              <PropertyRef Name="ID_товар_групи" />
+            </Principal>
+            <Dependent Role="Товар">
+              <PropertyRef Name="ID_товарної_групи" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <EntityContainer Name="Хранилище DBModelContainer">
+          <EntitySet Name="Зміст_реалізації" EntityType="Self.Зміст_реалізації" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Користувачі" EntityType="Self.Користувачі" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Магазини" EntityType="Self.Магазини" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Матеріали" EntityType="Self.Матеріали" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Реалізація" EntityType="Self.Реалізація" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Товар" EntityType="Self.Товар" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Товар_по_категоріям" EntityType="Self.Товар_по_категоріям" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Товар_по_порам_року" EntityType="Self.Товар_по_порам_року" Schema="dbo" store:Type="Tables" />
+          <EntitySet Name="Товарна_група" EntityType="Self.Товарна_група" Schema="dbo" store:Type="Tables" />
+          <AssociationSet Name="FK__Зміст_реа__ID_по__53D770D6" Association="Self.FK__Зміст_реа__ID_по__53D770D6">
+            <End Role="Реалізація" EntitySet="Реалізація" />
+            <End Role="Зміст_реалізації" EntitySet="Зміст_реалізації" />
+          </AssociationSet>
+          <AssociationSet Name="FK__Зміст_реа__ID_то__54CB950F" Association="Self.FK__Зміст_реа__ID_то__54CB950F">
+            <End Role="Товар" EntitySet="Товар" />
+            <End Role="Зміст_реалізації" EntitySet="Зміст_реалізації" />
+          </AssociationSet>
+          <AssociationSet Name="FK__Реалізаці__ID_ма__4B422AD5" Association="Self.FK__Реалізаці__ID_ма__4B422AD5">
+            <End Role="Магазини" EntitySet="Магазини" />
+            <End Role="Реалізація" EntitySet="Реалізація" />
+          </AssociationSet>
+          <AssociationSet Name="FK__Товар__ID_катего__5006DFF2" Association="Self.FK__Товар__ID_катего__5006DFF2">
+            <End Role="Товар_по_категоріям" EntitySet="Товар_по_категоріям" />
+            <End Role="Товар" EntitySet="Товар" />
+          </AssociationSet>
+          <AssociationSet Name="FK__Товар__ID_матері__50FB042B" Association="Self.FK__Товар__ID_матері__50FB042B">
+            <End Role="Матеріали" EntitySet="Матеріали" />
+            <End Role="Товар" EntitySet="Товар" />
+          </AssociationSet>
+          <AssociationSet Name="FK__Товар__ID_пори_р__4F12BBB9" Association="Self.FK__Товар__ID_пори_р__4F12BBB9">
+            <End Role="Товар_по_порам_року" EntitySet="Товар_по_порам_року" />
+            <End Role="Товар" EntitySet="Товар" />
+          </AssociationSet>
+          <AssociationSet Name="FK__Товар__ID_товарн__4E1E9780" Association="Self.FK__Товар__ID_товарн__4E1E9780">
+            <End Role="Товарна_група" EntitySet="Товарна_група" />
+            <End Role="Товар" EntitySet="Товар" />
+          </AssociationSet>
+        </EntityContainer>
+      </Schema>
+    </edmx:StorageModels>
+    <!-- CSDL content -->
+    <edmx:ConceptualModels>
+      <Schema Namespace="DBModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">
+        <EntityType Name="Зміст_реалізації">
+          <Key>
+            <PropertyRef Name="ID_зміст_реал" />
+          </Key>
+          <Property Name="ID_зміст_реал" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="ID_покупки" Type="Int32" />
+          <Property Name="Кількість" Type="Int32" />
+          <Property Name="ID_товару" Type="Int32" />
+          <NavigationProperty Name="Реалізація" Relationship="Self.FK__Зміст_реа__ID_по__53D770D6" FromRole="Зміст_реалізації" ToRole="Реалізація" />
+          <NavigationProperty Name="Товар" Relationship="Self.FK__Зміст_реа__ID_то__54CB950F" FromRole="Зміст_реалізації" ToRole="Товар" />
+        </EntityType>
+        <EntityType Name="Користувачі">
+          <Key>
+            <PropertyRef Name="ID_користувача" />
+          </Key>
+          <Property Name="ID_користувача" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Логін" Type="String" MaxLength="255" FixedLength="false" Unicode="true" Nullable="false" />
+          <Property Name="Захешований_пароль" Type="String" MaxLength="255" FixedLength="false" Unicode="true" Nullable="false" />
+        </EntityType>
+        <EntityType Name="Магазини">
+          <Key>
+            <PropertyRef Name="ID_магазину" />
+          </Key>
+          <Property Name="ID_магазину" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Адреса" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <Property Name="Телефон" Type="String" MaxLength="20" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="Реалізація" Relationship="Self.FK__Реалізаці__ID_ма__4B422AD5" FromRole="Магазини" ToRole="Реалізація" />
+        </EntityType>
+        <EntityType Name="Матеріали">
+          <Key>
+            <PropertyRef Name="ID_матеріалу" />
+          </Key>
+          <Property Name="ID_матеріалу" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Найменування" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="Товар" Relationship="Self.FK__Товар__ID_матері__50FB042B" FromRole="Матеріали" ToRole="Товар" />
+        </EntityType>
+        <EntityType Name="Реалізація">
+          <Key>
+            <PropertyRef Name="ID_покупки" />
+          </Key>
+          <Property Name="ID_покупки" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Дата" Type="DateTime" Precision="0" />
+          <Property Name="ID_магазину" Type="Int32" />
+          <NavigationProperty Name="Зміст_реалізації" Relationship="Self.FK__Зміст_реа__ID_по__53D770D6" FromRole="Реалізація" ToRole="Зміст_реалізації" />
+          <NavigationProperty Name="Магазини" Relationship="Self.FK__Реалізаці__ID_ма__4B422AD5" FromRole="Реалізація" ToRole="Магазини" />
+        </EntityType>
+        <EntityType Name="Товар">
+          <Key>
+            <PropertyRef Name="ID_товару" />
+          </Key>
+          <Property Name="ID_товару" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Назва" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <Property Name="Ціна" Type="Int32" />
+          <Property Name="Розмір" Type="String" MaxLength="20" FixedLength="false" Unicode="true" />
+          <Property Name="ID_товарної_групи" Type="Int32" />
+          <Property Name="ID_пори_року" Type="Int32" />
+          <Property Name="ID_категорії" Type="Int32" />
+          <Property Name="ID_матеріалу" Type="Int32" />
+          <NavigationProperty Name="Зміст_реалізації" Relationship="Self.FK__Зміст_реа__ID_то__54CB950F" FromRole="Товар" ToRole="Зміст_реалізації" />
+          <NavigationProperty Name="Матеріали" Relationship="Self.FK__Товар__ID_матері__50FB042B" FromRole="Товар" ToRole="Матеріали" />
+          <NavigationProperty Name="Товар_по_категоріям" Relationship="Self.FK__Товар__ID_катего__5006DFF2" FromRole="Товар" ToRole="Товар_по_категоріям" />
+          <NavigationProperty Name="Товар_по_порам_року" Relationship="Self.FK__Товар__ID_пори_р__4F12BBB9" FromRole="Товар" ToRole="Товар_по_порам_року" />
+          <NavigationProperty Name="Товарна_група" Relationship="Self.FK__Товар__ID_товарн__4E1E9780" FromRole="Товар" ToRole="Товарна_група" />
+        </EntityType>
+        <EntityType Name="Товар_по_категоріям">
+          <Key>
+            <PropertyRef Name="ID_категорії" />
+          </Key>
+          <Property Name="ID_категорії" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Найменування" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="Товар" Relationship="Self.FK__Товар__ID_катего__5006DFF2" FromRole="Товар_по_категоріям" ToRole="Товар" />
+        </EntityType>
+        <EntityType Name="Товар_по_порам_року">
+          <Key>
+            <PropertyRef Name="ID_пори_року" />
+          </Key>
+          <Property Name="ID_пори_року" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Найменування" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="Товар" Relationship="Self.FK__Товар__ID_пори_р__4F12BBB9" FromRole="Товар_по_порам_року" ToRole="Товар" />
+        </EntityType>
+        <EntityType Name="Товарна_група">
+          <Key>
+            <PropertyRef Name="ID_товар_групи" />
+          </Key>
+          <Property Name="ID_товар_групи" Type="Int32" Nullable="false" annotation:StoreGeneratedPattern="Identity" />
+          <Property Name="Найменування" Type="String" MaxLength="255" FixedLength="false" Unicode="true" />
+          <NavigationProperty Name="Товар" Relationship="Self.FK__Товар__ID_товарн__4E1E9780" FromRole="Товарна_група" ToRole="Товар" />
+        </EntityType>
+        <Association Name="FK__Зміст_реа__ID_по__53D770D6">
+          <End Role="Реалізація" Type="Self.Реалізація" Multiplicity="0..1" />
+          <End Role="Зміст_реалізації" Type="Self.Зміст_реалізації" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Реалізація">
+              <PropertyRef Name="ID_покупки" />
+            </Principal>
+            <Dependent Role="Зміст_реалізації">
+              <PropertyRef Name="ID_покупки" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK__Зміст_реа__ID_то__54CB950F">
+          <End Role="Товар" Type="Self.Товар" Multiplicity="0..1" />
+          <End Role="Зміст_реалізації" Type="Self.Зміст_реалізації" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Товар">
+              <PropertyRef Name="ID_товару" />
+            </Principal>
+            <Dependent Role="Зміст_реалізації">
+              <PropertyRef Name="ID_товару" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK__Реалізаці__ID_ма__4B422AD5">
+          <End Role="Магазини" Type="Self.Магазини" Multiplicity="0..1" />
+          <End Role="Реалізація" Type="Self.Реалізація" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Магазини">
+              <PropertyRef Name="ID_магазину" />
+            </Principal>
+            <Dependent Role="Реалізація">
+              <PropertyRef Name="ID_магазину" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK__Товар__ID_матері__50FB042B">
+          <End Role="Матеріали" Type="Self.Матеріали" Multiplicity="0..1" />
+          <End Role="Товар" Type="Self.Товар" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Матеріали">
+              <PropertyRef Name="ID_матеріалу" />
+            </Principal>
+            <Dependent Role="Товар">
+              <PropertyRef Name="ID_матеріалу" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK__Товар__ID_катего__5006DFF2">
+          <End Role="Товар_по_категоріям" Type="Self.Товар_по_категоріям" Multiplicity="0..1" />
+          <End Role="Товар" Type="Self.Товар" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Товар_по_категоріям">
+              <PropertyRef Name="ID_категорії" />
+            </Principal>
+            <Dependent Role="Товар">
+              <PropertyRef Name="ID_категорії" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK__Товар__ID_пори_р__4F12BBB9">
+          <End Role="Товар_по_порам_року" Type="Self.Товар_по_порам_року" Multiplicity="0..1" />
+          <End Role="Товар" Type="Self.Товар" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Товар_по_порам_року">
+              <PropertyRef Name="ID_пори_року" />
+            </Principal>
+            <Dependent Role="Товар">
+              <PropertyRef Name="ID_пори_року" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <Association Name="FK__Товар__ID_товарн__4E1E9780">
+          <End Role="Товарна_група" Type="Self.Товарна_група" Multiplicity="0..1" />
+          <End Role="Товар" Type="Self.Товар" Multiplicity="*" />
+          <ReferentialConstraint>
+            <Principal Role="Товарна_група">
+              <PropertyRef Name="ID_товар_групи" />
+            </Principal>
+            <Dependent Role="Товар">
+              <PropertyRef Name="ID_товарної_групи" />
+            </Dependent>
+          </ReferentialConstraint>
+        </Association>
+        <EntityContainer Name="Database1Entities" annotation:LazyLoadingEnabled="true">
+          <EntitySet Name="Зміст_реалізації" EntityType="Self.Зміст_реалізації" />
+          <EntitySet Name="Користувачі" EntityType="Self.Користувачі" />
+          <EntitySet Name="Магазини" EntityType="Self.Магазини" />
+          <EntitySet Name="Матеріали" EntityType="Self.Матеріали" />
+          <EntitySet Name="Реалізація" EntityType="Self.Реалізація" />
+          <EntitySet Name="Товар" EntityType="Self.Товар" />
+          <EntitySet Name="Товар_по_категоріям" EntityType="Self.Товар_по_категоріям" />
+          <EntitySet Name="Товар_по_порам_року" EntityType="Self.Товар_по_порам_року" />
+          <EntitySet Name="Товарна_група" EntityType="Self.Товарна_група" />
+          <AssociationSet Name="FK__Зміст_реа__ID_по__53D770D6" Association="Self.FK__Зміст_реа__ID_по__53D770D6">
+            <End Role="Реалізація" EntitySet="Реалізація" />
+            <End Role="Зміст_реалізації" EntitySet="Зміст_реалізації" />
+          </AssociationSet>
+          <AssociationSet Name="FK__Зміст_реа__ID_то__54CB950F" Association="Self.FK__Зміст_реа__ID_то__54CB950F">
+            <End Role="Товар" EntitySet="Товар" />
+            <End Role="Зміст_реалізації" EntitySet="Зміст_реалізації" />
+          </AssociationSet>
+          <AssociationSet Name="FK__Реалізаці__ID_ма__4B422AD5" Association="Self.FK__Реалізаці__ID_ма__4B422AD5">
+            <End Role="Магазини" EntitySet="Магазини" />
+            <End Role="Реалізація" EntitySet="Реалізація" />
+          </AssociationSet>
+          <AssociationSet Name="FK__Товар__ID_матері__50FB042B" Association="Self.FK__Товар__ID_матері__50FB042B">
+            <End Role="Матеріали" EntitySet="Матеріали" />
+            <End Role="Товар" EntitySet="Товар" />
+          </AssociationSet>
+          <AssociationSet Name="FK__Товар__ID_катего__5006DFF2" Association="Self.FK__Товар__ID_катего__5006DFF2">
+            <End Role="Товар_по_категоріям" EntitySet="Товар_по_категоріям" />
+            <End Role="Товар" EntitySet="Товар" />
+          </AssociationSet>
+          <AssociationSet Name="FK__Товар__ID_пори_р__4F12BBB9" Association="Self.FK__Товар__ID_пори_р__4F12BBB9">
+            <End Role="Товар_по_порам_року" EntitySet="Товар_по_порам_року" />
+            <End Role="Товар" EntitySet="Товар" />
+          </AssociationSet>
+          <AssociationSet Name="FK__Товар__ID_товарн__4E1E9780" Association="Self.FK__Товар__ID_товарн__4E1E9780">
+            <End Role="Товарна_група" EntitySet="Товарна_група" />
+            <End Role="Товар" EntitySet="Товар" />
+          </AssociationSet>
+        </EntityContainer>
+      </Schema>
+    </edmx:ConceptualModels>
+    <!-- C-S mapping content -->
+    <edmx:Mappings>
+      <Mapping Space="C-S" xmlns="http://schemas.microsoft.com/ado/2009/11/mapping/cs">
+        <EntityContainerMapping StorageEntityContainer="Хранилище DBModelContainer" CdmEntityContainer="Database1Entities">
+          <EntitySetMapping Name="Зміст_реалізації">
+            <EntityTypeMapping TypeName="DBModel.Зміст_реалізації">
+              <MappingFragment StoreEntitySet="Зміст_реалізації">
+                <ScalarProperty Name="ID_зміст_реал" ColumnName="ID_зміст_реал" />
+                <ScalarProperty Name="ID_покупки" ColumnName="ID_покупки" />
+                <ScalarProperty Name="Кількість" ColumnName="Кількість" />
+                <ScalarProperty Name="ID_товару" ColumnName="ID_товару" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Користувачі">
+            <EntityTypeMapping TypeName="DBModel.Користувачі">
+              <MappingFragment StoreEntitySet="Користувачі">
+                <ScalarProperty Name="ID_користувача" ColumnName="ID_користувача" />
+                <ScalarProperty Name="Логін" ColumnName="Логін" />
+                <ScalarProperty Name="Захешований_пароль" ColumnName="Захешований_пароль" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Магазини">
+            <EntityTypeMapping TypeName="DBModel.Магазини">
+              <MappingFragment StoreEntitySet="Магазини">
+                <ScalarProperty Name="ID_магазину" ColumnName="ID_магазину" />
+                <ScalarProperty Name="Адреса" ColumnName="Адреса" />
+                <ScalarProperty Name="Телефон" ColumnName="Телефон" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Матеріали">
+            <EntityTypeMapping TypeName="DBModel.Матеріали">
+              <MappingFragment StoreEntitySet="Матеріали">
+                <ScalarProperty Name="ID_матеріалу" ColumnName="ID_матеріалу" />
+                <ScalarProperty Name="Найменування" ColumnName="Найменування" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Реалізація">
+            <EntityTypeMapping TypeName="DBModel.Реалізація">
+              <MappingFragment StoreEntitySet="Реалізація">
+                <ScalarProperty Name="ID_покупки" ColumnName="ID_покупки" />
+                <ScalarProperty Name="Дата" ColumnName="Дата" />
+                <ScalarProperty Name="ID_магазину" ColumnName="ID_магазину" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Товар">
+            <EntityTypeMapping TypeName="DBModel.Товар">
+              <MappingFragment StoreEntitySet="Товар">
+                <ScalarProperty Name="ID_товару" ColumnName="ID_товару" />
+                <ScalarProperty Name="Назва" ColumnName="Назва" />
+                <ScalarProperty Name="Ціна" ColumnName="Ціна" />
+                <ScalarProperty Name="Розмір" ColumnName="Розмір" />
+                <ScalarProperty Name="ID_товарної_групи" ColumnName="ID_товарної_групи" />
+                <ScalarProperty Name="ID_пори_року" ColumnName="ID_пори_року" />
+                <ScalarProperty Name="ID_категорії" ColumnName="ID_категорії" />
+                <ScalarProperty Name="ID_матеріалу" ColumnName="ID_матеріалу" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Товар_по_категоріям">
+            <EntityTypeMapping TypeName="DBModel.Товар_по_категоріям">
+              <MappingFragment StoreEntitySet="Товар_по_категоріям">
+                <ScalarProperty Name="ID_категорії" ColumnName="ID_категорії" />
+                <ScalarProperty Name="Найменування" ColumnName="Найменування" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Товар_по_порам_року">
+            <EntityTypeMapping TypeName="DBModel.Товар_по_порам_року">
+              <MappingFragment StoreEntitySet="Товар_по_порам_року">
+                <ScalarProperty Name="ID_пори_року" ColumnName="ID_пори_року" />
+                <ScalarProperty Name="Найменування" ColumnName="Найменування" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+          <EntitySetMapping Name="Товарна_група">
+            <EntityTypeMapping TypeName="DBModel.Товарна_група">
+              <MappingFragment StoreEntitySet="Товарна_група">
+                <ScalarProperty Name="ID_товар_групи" ColumnName="ID_товар_групи" />
+                <ScalarProperty Name="Найменування" ColumnName="Найменування" />
+              </MappingFragment>
+            </EntityTypeMapping>
+          </EntitySetMapping>
+        </EntityContainerMapping>
+      </Mapping>
+    </edmx:Mappings>
+  </edmx:Runtime>
+  <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <Connection>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="MetadataArtifactProcessing" Value="EmbedInOutputAssembly" />
+      </DesignerInfoPropertySet>
+    </Connection>
+    <Options>
+      <DesignerInfoPropertySet>
+        <DesignerProperty Name="ValidateOnBuild" Value="true" />
+        <DesignerProperty Name="EnablePluralization" Value="false" />
+        <DesignerProperty Name="IncludeForeignKeysInModel" Value="true" />
+        <DesignerProperty Name="UseLegacyProvider" Value="false" />
+        <DesignerProperty Name="CodeGenerationStrategy" Value="Нет" />
+      </DesignerInfoPropertySet>
+    </Options>
+    <!-- Diagram content (shape and connector positions) -->
+    <Diagrams></Diagrams>
+  </Designer>
+</edmx:Edmx>

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+ <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <!-- Diagram content (shape and connector positions) -->
+    <edmx:Diagrams>
+      <Diagram DiagramId="71dd9913568b4d9c9baca611fbb6ddff" Name="Diagram1">
+        <EntityTypeShape EntityType="DBModel.Зміст_реалізації" Width="1.5" PointX="4.25" PointY="3.625" IsExpanded="true" />
+        <EntityTypeShape EntityType="DBModel.Користувачі" Width="1.5" PointX="12.25" PointY="4.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="DBModel.Магазини" Width="1.5" PointX="1.875" PointY="6.625" IsExpanded="true" />
+        <EntityTypeShape EntityType="DBModel.Матеріали" Width="1.5" PointX="9.75" PointY="3" IsExpanded="true" />
+        <EntityTypeShape EntityType="DBModel.Реалізація" Width="1.5" PointX="1.875" PointY="3" IsExpanded="true" />
+        <EntityTypeShape EntityType="DBModel.Товар" Width="1.5" PointX="6.75" PointY="3.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="DBModel.Товар_по_категоріям" Width="1.5" PointX="6.75" PointY="0.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="DBModel.Товар_по_порам_року" Width="1.5" PointX="9.75" PointY="6.375" IsExpanded="true" />
+        <EntityTypeShape EntityType="DBModel.Товарна_група" Width="1.5" PointX="4.375" PointY="6.5" IsExpanded="true" />
+        <AssociationConnector Association="DBModel.FK__Зміст_реа__ID_по__53D770D6" ManuallyRouted="false" />
+        <AssociationConnector Association="DBModel.FK__Зміст_реа__ID_то__54CB950F" ManuallyRouted="false" />
+        <AssociationConnector Association="DBModel.FK__Реалізаці__ID_ма__4B422AD5" ManuallyRouted="false" />
+        <AssociationConnector Association="DBModel.FK__Товар__ID_матері__50FB042B" ManuallyRouted="false" />
+        <AssociationConnector Association="DBModel.FK__Товар__ID_катего__5006DFF2" ManuallyRouted="false" />
+        <AssociationConnector Association="DBModel.FK__Товар__ID_пори_р__4F12BBB9" ManuallyRouted="false" />
+        <AssociationConnector Association="DBModel.FK__Товар__ID_товарн__4E1E9780" ManuallyRouted="false" />
+      </Diagram>
+    </edmx:Diagrams>
+  </edmx:Designer>
+</edmx:Edmx>
