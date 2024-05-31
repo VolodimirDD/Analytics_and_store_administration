@@ -3,6 +3,7 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Drawing;
 using System.IO;
+using System.Security.Cryptography;
 using System.Windows.Forms;
 
 namespace ВКР
@@ -374,10 +375,8 @@ namespace ВКР
             }
 
             int realId = (int)dataGridView1.SelectedRows[0].Cells["ID"].Value;
-
-            string query = "DELETE FROM Реалізація WHERE [ID_покупки] = @PokupkaID";
-
-            DialogResult result = MessageBox.Show("Ви дійсно хочете видалити цей запис?", "Підтвердження видалення", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+            string deleteMessage = "Ви дійсно хочете видалити цей запис? Якщо ви видалите цей запис, всі зв'язані записи теж будуть видалені!";
+            DialogResult result = MessageBox.Show(deleteMessage, "Підтвердження видалення", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
 
             if (result == DialogResult.Yes)
             {
@@ -388,9 +387,22 @@ namespace ВКР
                     using (SqlConnection connection = new SqlConnection(dbHelper.GetConnection().ConnectionString))
                     {
                         connection.Open();
-                        SqlCommand cmd = new SqlCommand(query, connection);
-                        cmd.Parameters.AddWithValue("@PokupkaID", realId);
-                        cmd.ExecuteNonQuery();
+
+                        // Видаляємо записи з таблиці "Зміст реалізації", пов'язані з даною покупкою
+                        string deleteZmistRealizatsiyiQuery = "DELETE FROM Зміст_реалізації WHERE ID_покупки = @RealID";
+                        using (SqlCommand deleteZmistRealizatsiyiCmd = new SqlCommand(deleteZmistRealizatsiyiQuery, connection))
+                        {
+                            deleteZmistRealizatsiyiCmd.Parameters.AddWithValue("@RealID", realId);
+                            deleteZmistRealizatsiyiCmd.ExecuteNonQuery();
+                        }
+
+                        // Видаляємо запис із таблиці "Реалізація"
+                        string deleteRealizatsiyaQuery = "DELETE FROM Реалізація WHERE ID_покупки = @RealID";
+                        using (SqlCommand deleteRealizatsiyaCmd = new SqlCommand(deleteRealizatsiyaQuery, connection))
+                        {
+                            deleteRealizatsiyaCmd.Parameters.AddWithValue("@RealID", realId);
+                            deleteRealizatsiyaCmd.ExecuteNonQuery();
+                        }
                     }
 
                     MessageBox.Show("Запис успішно видалено.", "Інформація", MessageBoxButtons.OK, MessageBoxIcon.Information);

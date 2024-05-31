@@ -181,6 +181,23 @@ namespace ВКР
 
             int userId = (int)dataGridView1.SelectedRows[0].Cells["ID"].Value;
 
+            string userLogin = dataGridView1.SelectedRows[0].Cells["Логін"].Value.ToString();
+
+            // Перевіряємо, чи видаляється запис останній
+            if (originalDataTable.Rows.Count == 1)
+            {
+                MessageBox.Show("Видалення останнього користувача заборонено.", "Помилка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            // Перевіряємо, чи видаляється запис поточним користувачем
+            if (userLogin == Username)
+            {
+                // Виводимо повідомлення про неможливість видалення поточного користувача
+                MessageBox.Show("Ви не можете видалити обліковий запис, під яким у Вас наразі є доступ до додатку. Зверніться до адміністратора.", "Помилка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
             string query = "DELETE FROM Користувачі WHERE [ID_користувача] = @UserID";
 
             DialogResult result = MessageBox.Show("Ви дійсно хочете видалити цей запис?", "Підтвердження видалення", MessageBoxButtons.YesNo, MessageBoxIcon.Question);

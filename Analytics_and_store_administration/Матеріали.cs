@@ -286,37 +286,107 @@ namespace ВКР
 
             int materialId = (int)dataGridView1.SelectedRows[0].Cells["ID"].Value;
 
-            string query = "DELETE FROM Матеріали WHERE [ID_матеріалу] = @MaterialID";
-
-            DialogResult result = MessageBox.Show("Ви дійсно хочете видалити цей запис?", "Підтвердження видалення", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-            if (result == DialogResult.Yes)
+            try
             {
-                try
-                {
-                    dbHelper.OpenConnection();
+                dbHelper.OpenConnection();
 
-                    using (SqlConnection connection = new SqlConnection(dbHelper.GetConnection().ConnectionString))
+                using (SqlConnection connection = new SqlConnection(dbHelper.GetConnection().ConnectionString))
+                {
+                    connection.Open();
+
+                    bool hasRelatedRecords = false;
+
+                    // Перевіряємо наявність пов'язаних записів у таблиці "Зміст реалізації"
+                    using (SqlCommand checkZmistRealizatsiyiRecordsCmd = new SqlCommand("SELECT COUNT(*) FROM Зміст_реалізації WHERE ID_товару IN (SELECT ID_товару FROM Товар WHERE ID_матеріалу = @MaterialID)", connection))
                     {
-                       connection.Open();
-                       SqlCommand cmd = new SqlCommand(query, connection);
-                       cmd.Parameters.AddWithValue("@MaterialID", materialId);
-                       cmd.ExecuteNonQuery();                      
+                        checkZmistRealizatsiyiRecordsCmd.Parameters.AddWithValue("@MaterialID", materialId);
+                        int zmistRealizatsiyiRecordsCount = (int)checkZmistRealizatsiyiRecordsCmd.ExecuteScalar();
+                        if (zmistRealizatsiyiRecordsCount > 0)
+                        {
+                            hasRelatedRecords = true;
+                        }
                     }
 
-                    MessageBox.Show("Запис успішно видалено.", "Інформація", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    LoadData();
-                    materialTextBox.Text = string.Empty;
-                    dataGridView1.ClearSelection();
+                    // Перевіряємо наявність пов'язаних записів у таблиці "Реалізація"
+                    if (!hasRelatedRecords)
+                    {
+                        using (SqlCommand checkRealizatsiyaRecordsCmd = new SqlCommand("SELECT COUNT(*) FROM Реалізація WHERE ID_покупки IN (SELECT ID_покупки FROM Зміст_реалізації WHERE ID_товару IN (SELECT ID_товару FROM Товар WHERE ID_матеріалу = @MaterialID))", connection))
+                        {
+                            checkRealizatsiyaRecordsCmd.Parameters.AddWithValue("@MaterialID", materialId);
+                            int realizatsiyaRecordsCount = (int)checkRealizatsiyaRecordsCmd.ExecuteScalar();
+                            if (realizatsiyaRecordsCount > 0)
+                            {
+                                hasRelatedRecords = true;
+                            }
+                        }
+                    }
+
+                    // Перевіряємо наявність пов'язаних записів у таблиці "Товар"
+                    if (!hasRelatedRecords)
+                    {
+                        using (SqlCommand checkTovarRecordsCmd = new SqlCommand("SELECT COUNT(*) FROM Товар WHERE ID_матеріалу = @MaterialID", connection))
+                        {
+                            checkTovarRecordsCmd.Parameters.AddWithValue("@MaterialID", materialId);
+                            int tovarRecordsCount = (int)checkTovarRecordsCmd.ExecuteScalar();
+                            if (tovarRecordsCount > 0)
+                            {
+                                hasRelatedRecords = true;
+                            }
+                        }
+                    }
+
+                    string deleteMessage = hasRelatedRecords ? "Ви точно хочете видалити цей запис? Якщо ви видалите цей запис, всі зв'язані записи теж будуть видалені!" : "Ви дійсно хочете видалити цей запис?";
+
+                    DialogResult result = MessageBox.Show(deleteMessage, "Підтвердження видалення", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                    if (result == DialogResult.Yes)
+                    {
+                        // Якщо є пов'язані записи та користувач згоден видалити їх
+                        if (hasRelatedRecords)
+                        {
+                            string deleteZmistRealizatsiyiQuery = "DELETE FROM Зміст_реалізації WHERE ID_товару IN (SELECT ID_товару FROM Товар WHERE ID_матеріалу = @MaterialID)";
+                            using (SqlCommand deleteZmistRealizatsiyiCmd = new SqlCommand(deleteZmistRealizatsiyiQuery, connection))
+                            {
+                                deleteZmistRealizatsiyiCmd.Parameters.AddWithValue("@MaterialID", materialId);
+                                deleteZmistRealizatsiyiCmd.ExecuteNonQuery();
+                            }
+
+                            string deleteTovarQuery = "DELETE FROM Товар WHERE ID_матеріалу = @MaterialID";
+                            using (SqlCommand deleteTovarCmd = new SqlCommand(deleteTovarQuery, connection))
+                            {
+                                deleteTovarCmd.Parameters.AddWithValue("@MaterialID", materialId);
+                                deleteTovarCmd.ExecuteNonQuery();
+                            }
+
+                            string deleteRealizatsiyaQuery = "DELETE FROM Реалізація WHERE ID_покупки NOT IN (SELECT ID_покупки FROM Зміст_реалізації)";
+                            using (SqlCommand deleteRealizatsiyaCmd = new SqlCommand(deleteRealizatsiyaQuery, connection))
+                            {
+                                deleteRealizatsiyaCmd.Parameters.AddWithValue("@MaterialID", materialId);
+                                deleteRealizatsiyaCmd.ExecuteNonQuery();
+                            }
+                        }
+
+                        string deleteMaterialQuery = "DELETE FROM Матеріали WHERE ID_матеріалу = @MaterialID";
+                        using (SqlCommand deleteMaterialCmd = new SqlCommand(deleteMaterialQuery, connection))
+                        {
+                            deleteMaterialCmd.Parameters.AddWithValue("@MaterialID", materialId);
+                            deleteMaterialCmd.ExecuteNonQuery();
+                        }
+
+                        MessageBox.Show("Запис успішно видалено.", "Інформація", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        LoadData();
+                        materialTextBox.Text = string.Empty;
+                        dataGridView1.ClearSelection();
+                    }
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Помилка при видаленні запису : " + ex.Message, "Помилка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-                finally
-                {
-                    dbHelper.CloseConnection();
-                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Помилка при видаленні запису : " + ex.Message, "Помилка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                dbHelper.CloseConnection();
             }
         }
 

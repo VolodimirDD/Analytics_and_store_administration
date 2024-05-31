@@ -4,6 +4,7 @@ using System.Data.SqlClient;
 using System.Drawing;
 using System.IO;
 using System.Windows.Forms;
+using System.Windows.Media.Media3D;
 
 namespace ВКР
 {
@@ -284,39 +285,105 @@ namespace ВКР
                 return;
             }
 
-            int tovatnagrupaId = (int)dataGridView1.SelectedRows[0].Cells["ID"].Value;
+            int tovarnagrupaId = (int)dataGridView1.SelectedRows[0].Cells["ID"].Value;
 
-            string query = "DELETE FROM Товарна_група WHERE [ID_товар_групи] = @TovGrID";
-
-            DialogResult result = MessageBox.Show("Ви дійсно хочете видалити цей запис?", "Підтвердження видалення", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-            if (result == DialogResult.Yes)
+            try
             {
-                try
-                {
-                    dbHelper.OpenConnection();
+                dbHelper.OpenConnection();
 
-                    using (SqlConnection connection = new SqlConnection(dbHelper.GetConnection().ConnectionString))
+                using (SqlConnection connection = new SqlConnection(dbHelper.GetConnection().ConnectionString))
+                {
+                    connection.Open();
+
+                    bool hasRelatedRecords = false;
+
+                    using (SqlCommand checkZmistRealizatsiyiRecordsCmd = new SqlCommand("SELECT COUNT(*) FROM Зміст_реалізації WHERE ID_товару IN (SELECT ID_товару FROM Товар WHERE ID_товарної_групи = @TovGrID)", connection))
                     {
-                        connection.Open();
-                        SqlCommand cmd = new SqlCommand(query, connection);
-                        cmd.Parameters.AddWithValue("@TovGrID", tovatnagrupaId);
-                        cmd.ExecuteNonQuery();
+                        checkZmistRealizatsiyiRecordsCmd.Parameters.AddWithValue("@TovGrID", tovarnagrupaId);
+                        int zmistRealizatsiyiRecordsCount = (int)checkZmistRealizatsiyiRecordsCmd.ExecuteScalar();
+                        if (zmistRealizatsiyiRecordsCount > 0)
+                        {
+                            hasRelatedRecords = true;
+                        }
                     }
 
-                    MessageBox.Show("Запис успішно видалено.", "Інформація", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    LoadData();
-                    tovarnagrupaTextBox.Text = string.Empty;
-                    dataGridView1.ClearSelection();
+                    if (!hasRelatedRecords)
+                    {
+                        using (SqlCommand checkRealizatsiyaRecordsCmd = new SqlCommand("SELECT COUNT(*) FROM Реалізація WHERE ID_покупки IN (SELECT ID_покупки FROM Зміст_реалізації WHERE ID_товару IN (SELECT ID_товару FROM Товар WHERE ID_товарної_групи = @TovGrID))", connection))
+                        {
+                            checkRealizatsiyaRecordsCmd.Parameters.AddWithValue("@TovGrID", tovarnagrupaId);
+                            int realizatsiyaRecordsCount = (int)checkRealizatsiyaRecordsCmd.ExecuteScalar();
+                            if (realizatsiyaRecordsCount > 0)
+                            {
+                                hasRelatedRecords = true;
+                            }
+                        }
+                    }
+
+                    if (!hasRelatedRecords)
+                    {
+                        using (SqlCommand checkTovarRecordsCmd = new SqlCommand("SELECT COUNT(*) FROM Товар WHERE ID_товарної_групи = @TovGrID", connection))
+                        {
+                            checkTovarRecordsCmd.Parameters.AddWithValue("@TovGrID", tovarnagrupaId);
+                            int tovarRecordsCount = (int)checkTovarRecordsCmd.ExecuteScalar();
+                            if (tovarRecordsCount > 0)
+                            {
+                                hasRelatedRecords = true;
+                            }
+                        }
+                    }
+
+                    string deleteMessage = hasRelatedRecords ? "Ви точно хочете видалити цей запис? Якщо ви видалите цей запис, всі зв'язані записи теж будуть видалені!" : "Ви дійсно хочете видалити цей запис?";
+
+                    DialogResult result = MessageBox.Show(deleteMessage, "Підтвердження видалення", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                    if (result == DialogResult.Yes)
+                    {
+                        if (hasRelatedRecords)
+                        {
+                            string deleteZmistRealizatsiyiQuery = "DELETE FROM Зміст_реалізації WHERE ID_товару IN (SELECT ID_товару FROM Товар WHERE ID_товарної_групи = @TovGrID)";
+                            using (SqlCommand deleteZmistRealizatsiyiCmd = new SqlCommand(deleteZmistRealizatsiyiQuery, connection))
+                            {
+                                deleteZmistRealizatsiyiCmd.Parameters.AddWithValue("@TovGrID", tovarnagrupaId);
+                                deleteZmistRealizatsiyiCmd.ExecuteNonQuery();
+                            }
+
+                            string deleteTovarQuery = "DELETE FROM Товар WHERE ID_товарної_групи = @TovGrID";
+                            using (SqlCommand deleteTovarCmd = new SqlCommand(deleteTovarQuery, connection))
+                            {
+                                deleteTovarCmd.Parameters.AddWithValue("@TovGrID", tovarnagrupaId);
+                                deleteTovarCmd.ExecuteNonQuery();
+                            }
+
+                            string deleteRealizatsiyaQuery = "DELETE FROM Реалізація WHERE ID_покупки NOT IN (SELECT ID_покупки FROM Зміст_реалізації)";
+                            using (SqlCommand deleteRealizatsiyaCmd = new SqlCommand(deleteRealizatsiyaQuery, connection))
+                            {
+                                deleteRealizatsiyaCmd.Parameters.AddWithValue("@TovGrID", tovarnagrupaId);
+                                deleteRealizatsiyaCmd.ExecuteNonQuery();
+                            }
+                        }
+
+                        string deleteTovGrRecordQuery = "DELETE FROM Товарна_група WHERE ID_товар_групи = @TovGrID";
+                        using (SqlCommand deleteTovGrRecordCmd = new SqlCommand(deleteTovGrRecordQuery, connection))
+                        {
+                            deleteTovGrRecordCmd.Parameters.AddWithValue("@TovGrID", tovarnagrupaId);
+                            deleteTovGrRecordCmd.ExecuteNonQuery();
+                        }
+
+                        MessageBox.Show("Запис успішно видалено.", "Інформація", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        LoadData();
+                        tovarnagrupaTextBox.Text = string.Empty;
+                        dataGridView1.ClearSelection();
+                    }
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Помилка при видаленні запису : " + ex.Message, "Помилка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-                finally
-                {
-                    dbHelper.CloseConnection();
-                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Помилка при видаленні запису : " + ex.Message, "Помилка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                dbHelper.CloseConnection();
             }
         }
 

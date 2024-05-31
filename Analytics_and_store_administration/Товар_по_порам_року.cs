@@ -287,37 +287,103 @@ namespace ВКР
 
             int porarokuId = (int)dataGridView1.SelectedRows[0].Cells["ID"].Value;
 
-            string query = "DELETE FROM Товар_по_порам_року WHERE [ID_пори_року] = @PoraRokuID";
-
-            DialogResult result = MessageBox.Show("Ви дійсно хочете видалити цей запис?", "Підтвердження видалення", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-            if (result == DialogResult.Yes)
+            try
             {
-                try
-                {
-                    dbHelper.OpenConnection();
+                dbHelper.OpenConnection();
 
-                    using (SqlConnection connection = new SqlConnection(dbHelper.GetConnection().ConnectionString))
+                using (SqlConnection connection = new SqlConnection(dbHelper.GetConnection().ConnectionString))
+                {
+                    connection.Open();
+
+                    bool hasRelatedRecords = false;
+
+                    using (SqlCommand checkZmistRealizatsiyiRecordsCmd = new SqlCommand("SELECT COUNT(*) FROM Зміст_реалізації WHERE ID_товару IN (SELECT ID_товару FROM Товар WHERE ID_пори_року = @PoraRokuID)", connection))
                     {
-                        connection.Open();
-                        SqlCommand cmd = new SqlCommand(query, connection);
-                        cmd.Parameters.AddWithValue("@PoraRokuID", porarokuId);
-                        cmd.ExecuteNonQuery();
+                        checkZmistRealizatsiyiRecordsCmd.Parameters.AddWithValue("@PoraRokuID", porarokuId);
+                        int zmistRealizatsiyiRecordsCount = (int)checkZmistRealizatsiyiRecordsCmd.ExecuteScalar();
+                        if (zmistRealizatsiyiRecordsCount > 0)
+                        {
+                            hasRelatedRecords = true;
+                        }
                     }
 
-                    MessageBox.Show("Запис успішно видалено.", "Інформація", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    LoadData();
-                    porarokuTextBox.Text = string.Empty;
-                    dataGridView1.ClearSelection();
+                    if (!hasRelatedRecords)
+                    {
+                        using (SqlCommand checkRealizatsiyaRecordsCmd = new SqlCommand("SELECT COUNT(*) FROM Реалізація WHERE ID_покупки IN (SELECT ID_покупки FROM Зміст_реалізації WHERE ID_товару IN (SELECT ID_товару FROM Товар WHERE ID_пори_року = @PoraRokuID))", connection))
+                        {
+                            checkRealizatsiyaRecordsCmd.Parameters.AddWithValue("@PoraRokuID", porarokuId);
+                            int realizatsiyaRecordsCount = (int)checkRealizatsiyaRecordsCmd.ExecuteScalar();
+                            if (realizatsiyaRecordsCount > 0)
+                            {
+                                hasRelatedRecords = true;
+                            }
+                        }
+                    }
+
+                    if (!hasRelatedRecords)
+                    {
+                        using (SqlCommand checkTovarRecordsCmd = new SqlCommand("SELECT COUNT(*) FROM Товар WHERE ID_пори_року = @PoraRokuID", connection))
+                        {
+                            checkTovarRecordsCmd.Parameters.AddWithValue("@PoraRokuID", porarokuId);
+                            int tovarRecordsCount = (int)checkTovarRecordsCmd.ExecuteScalar();
+                            if (tovarRecordsCount > 0)
+                            {
+                                hasRelatedRecords = true;
+                            }
+                        }
+                    }
+
+                    string deleteMessage = hasRelatedRecords ? "Ви точно хочете видалити цей запис? Якщо ви видалите цей запис, всі зв'язані записи теж будуть видалені!" : "Ви дійсно хочете видалити цей запис?";
+
+                    DialogResult result = MessageBox.Show(deleteMessage, "Підтвердження видалення", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                    if (result == DialogResult.Yes)
+                    {
+                        if (hasRelatedRecords)
+                        {
+                            string deleteZmistRealizatsiyiQuery = "DELETE FROM Зміст_реалізації WHERE ID_товару IN (SELECT ID_товару FROM Товар WHERE ID_пори_року = @PoraRokuID)";
+                            using (SqlCommand deleteZmistRealizatsiyiCmd = new SqlCommand(deleteZmistRealizatsiyiQuery, connection))
+                            {
+                                deleteZmistRealizatsiyiCmd.Parameters.AddWithValue("@PoraRokuID", porarokuId);
+                                deleteZmistRealizatsiyiCmd.ExecuteNonQuery();
+                            }
+
+                            string deleteTovarQuery = "DELETE FROM Товар WHERE ID_пори_року = @PoraRokuID";
+                            using (SqlCommand deleteTovarCmd = new SqlCommand(deleteTovarQuery, connection))
+                            {
+                                deleteTovarCmd.Parameters.AddWithValue("@PoraRokuID", porarokuId);
+                                deleteTovarCmd.ExecuteNonQuery();
+                            }
+
+                            string deleteRealizatsiyaQuery = "DELETE FROM Реалізація WHERE ID_покупки NOT IN (SELECT ID_покупки FROM Зміст_реалізації)";
+                            using (SqlCommand deleteRealizatsiyaCmd = new SqlCommand(deleteRealizatsiyaQuery, connection))
+                            {
+                                deleteRealizatsiyaCmd.Parameters.AddWithValue("@PoraRokuID", porarokuId);
+                                deleteRealizatsiyaCmd.ExecuteNonQuery();
+                            }
+                        }
+
+                        string deletePoraRokuQuery = "DELETE FROM Товар_по_порам_року WHERE ID_пори_року = @PoraRokuID";
+                        using (SqlCommand deletePoraRokuCmd = new SqlCommand(deletePoraRokuQuery, connection))
+                        {
+                            deletePoraRokuCmd.Parameters.AddWithValue("@PoraRokuID", porarokuId);
+                            deletePoraRokuCmd.ExecuteNonQuery();
+                        }
+
+                        MessageBox.Show("Запис успішно видалено.", "Інформація", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        LoadData();
+                        porarokuTextBox.Text = string.Empty;
+                        dataGridView1.ClearSelection();
+                    }
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Помилка при видаленні запису : " + ex.Message, "Помилка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-                finally
-                {
-                    dbHelper.CloseConnection();
-                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Помилка при видаленні запису : " + ex.Message, "Помилка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                dbHelper.CloseConnection();
             }
         }
 

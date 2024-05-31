@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Data.Tools.Schema.Sql.SchemaModel.Parameterization;
+using System;
 using System.Data;
 using System.Data.SqlClient;
 using System.Drawing;
@@ -111,7 +112,7 @@ namespace ВКР
             phoneMaskedTextBox.PromptChar = ' ';
             phoneMaskedTextBox.SkipLiterals = true;
             phoneMaskedTextBox.BeepOnError = false;
-            phoneMaskedTextBox.AllowPromptAsInput = true;          
+            phoneMaskedTextBox.AllowPromptAsInput = true;
             AddButton.Cursor = Cursors.Hand;
             EditButton.Cursor = Cursors.Hand;
             DeleteButton.Cursor = Cursors.Hand;
@@ -152,7 +153,7 @@ namespace ВКР
         private void backButton_Click(object sender, EventArgs e)
         {
             AdminForm admForm = new AdminForm();
-            admForm.Username = Username; 
+            admForm.Username = Username;
             admForm.Show();
             this.Hide();
         }
@@ -168,7 +169,7 @@ namespace ВКР
         }
 
         private void EditButton_Click(object sender, EventArgs e)
-        {           
+        {
             // Перевіряємо, чи обраний запис і чи не є виділений осередок порожнім
             if (dataGridView1.SelectedRows.Count == 0 || dataGridView1.SelectedRows[0].Cells["Адреса"].Value == null || dataGridView1.SelectedRows[0].Cells["Телефон"].Value == null)
             {
@@ -235,7 +236,7 @@ namespace ВКР
 
         private void DeleteButton_Click(object sender, EventArgs e)
         {
-            // Перевіряємо, чи обраний запис і чи не є виділений осередок порожнім
+            // Перевіряємо, чи обраний запис і чи не є обраний осередок порожнім
             if (dataGridView1.SelectedRows.Count == 0 || dataGridView1.SelectedRows[0].Cells["Адреса"].Value == null || dataGridView1.SelectedRows[0].Cells["Телефон"].Value == null)
             {
                 MessageBox.Show("Будь ласка, оберіть запис для видалення.", "Помилка", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -244,38 +245,89 @@ namespace ВКР
 
             int magId = (int)dataGridView1.SelectedRows[0].Cells["ID"].Value;
 
-            string query = "DELETE FROM Магазини WHERE [ID_магазину] = @magID";
-
-            DialogResult result = MessageBox.Show("Ви дійсно хочете видалити цей запис?", "Підтвердження видалення", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-            if (result == DialogResult.Yes)
+            try
             {
-                try
-                {
-                    dbHelper.OpenConnection();
+                dbHelper.OpenConnection();
 
-                    using (SqlConnection connection = new SqlConnection(dbHelper.GetConnection().ConnectionString))
+                using (SqlConnection connection = new SqlConnection(dbHelper.GetConnection().ConnectionString))
+                {
+                    connection.Open();
+
+                    bool hasRelatedRecords = false;
+
+                    // Перевіряємо наявність пов'язаних записів у таблиці "Реалізація"
+                    using (SqlCommand checkRealizatsiyaRecordsCmd = new SqlCommand("SELECT COUNT(*) FROM Реалізація WHERE ID_магазину = @magID", connection))
                     {
-                        connection.Open();
-                        SqlCommand cmd = new SqlCommand(query, connection);
-                        cmd.Parameters.AddWithValue("@MagID", magId);
-                        cmd.ExecuteNonQuery();
+                        checkRealizatsiyaRecordsCmd.Parameters.AddWithValue("@magID", magId);
+                        int realizatsiyaRecordsCount = (int)checkRealizatsiyaRecordsCmd.ExecuteScalar();
+                        if (realizatsiyaRecordsCount > 0)
+                        {
+                            hasRelatedRecords = true;
+                        }
                     }
 
-                    MessageBox.Show("Запис успішно видалено.", "Інформація", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    LoadData();
-                    adressTextBox.Text = string.Empty;
-                    phoneMaskedTextBox.Text = string.Empty;
-                    dataGridView1.ClearSelection();
+                    // Перевіряємо наявність пов'язаних записів у таблиці "Зміст_реалізації"
+                    if (!hasRelatedRecords)
+                    {
+                        using (SqlCommand checkZmistRealizatsiyiRecordsCmd = new SqlCommand("SELECT COUNT(*) FROM Зміст_реалізації WHERE ID_покупки IN (SELECT ID_покупки FROM Реалізація WHERE ID_магазину = @magID)", connection))
+                        {
+                            checkZmistRealizatsiyiRecordsCmd.Parameters.AddWithValue("@magID", magId);
+                            int zmistRealizatsiyiRecordsCount = (int)checkZmistRealizatsiyiRecordsCmd.ExecuteScalar();
+                            if (zmistRealizatsiyiRecordsCount > 0)
+                            {
+                                hasRelatedRecords = true;
+                            }
+                        }
+                    }
+
+                    string deleteMessage = hasRelatedRecords ? "Ви точно хочете видалити цей запис? Якщо ви видалити цей запис, всі зв'язані записи теж будуть видалені!" : "Ви дійсно хочете видалити цей запис?";
+
+                    DialogResult result = MessageBox.Show(deleteMessage, "Підтвердження видалення", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                    if (result == DialogResult.Yes)
+                    {
+                        // Якщо є пов'язані записи та користувач згоден видалити їх
+                        if (hasRelatedRecords)
+                        {
+                            // Видалення пов'язаних записів та самого магазину
+                            string deleteRealizatsiyaQuery = "DELETE FROM Зміст_реалізації WHERE ID_покупки IN (SELECT ID_покупки FROM Реалізація WHERE ID_магазину = @magID)";
+                            using (SqlCommand deleteRealizatsiyaCmd = new SqlCommand(deleteRealizatsiyaQuery, connection))
+                            {
+                                deleteRealizatsiyaCmd.Parameters.AddWithValue("@magID", magId);
+                                deleteRealizatsiyaCmd.ExecuteNonQuery();
+                            }
+
+                            string deleteRealizatsiyaRecordQuery = "DELETE FROM Реалізація WHERE ID_магазину = @magID";
+                            using (SqlCommand deleteRealizatsiyaRecordCmd = new SqlCommand(deleteRealizatsiyaRecordQuery, connection))
+                            {
+                                deleteRealizatsiyaRecordCmd.Parameters.AddWithValue("@magID", magId);
+                                deleteRealizatsiyaRecordCmd.ExecuteNonQuery();
+                            }
+                        }
+
+                        // Видалення запису з таблиці "Магазини"
+                        string deleteMagazynQuery = "DELETE FROM Магазини WHERE ID_магазину = @magID";
+                        using (SqlCommand deleteMagazynCmd = new SqlCommand(deleteMagazynQuery, connection))
+                        {
+                            deleteMagazynCmd.Parameters.AddWithValue("@magID", magId);
+                            deleteMagazynCmd.ExecuteNonQuery();
+                        }
+
+                        MessageBox.Show("Запис успішно видалено.", "Інформація", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        LoadData();
+                        adressTextBox.Text = string.Empty;
+                        phoneMaskedTextBox.Text = string.Empty;
+                        dataGridView1.ClearSelection();
+                    }
                 }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Помилка при видаленні запису : " + ex.Message, "Помилка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-                finally
-                {
-                    dbHelper.CloseConnection();
-                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Помилка при видаленні запису : " + ex.Message, "Помилка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                dbHelper.CloseConnection();
             }
         }
 

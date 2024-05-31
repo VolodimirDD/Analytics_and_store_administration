@@ -28,7 +28,7 @@ namespace ВКР
 
         private void LoadData()
         {
-            string query = "SELECT * FROM Зміст_реалізації";
+            string query = "SELECT [ID_зміст_реал] AS ID,[ID_покупки], [Кількість], [ID_товару] FROM Зміст_реалізації";
 
             try
             {
@@ -87,7 +87,7 @@ namespace ВКР
         private void backButton_Click(object sender, EventArgs e)
         {
             AdminForm admForm = new AdminForm();
-            admForm.Username = Username; 
+            admForm.Username = Username;
             admForm.Show();
             this.Hide();
         }
@@ -108,7 +108,7 @@ namespace ВКР
                     SqlDataAdapter adapter = new SqlDataAdapter(query, connection);
                     DataTable realDataTable = new DataTable();
                     adapter.Fill(realDataTable);
-                    dataGridView2.DataSource = realDataTable;                  
+                    dataGridView2.DataSource = realDataTable;
                     realDataView = realDataTable.DefaultView;
                 }
             }
@@ -169,7 +169,7 @@ namespace ВКР
             user.AutoSize = true; // Автоматично встановлюємо під довжину тексту
             user.TextAlign = ContentAlignment.TopRight; // Вирівнюємо текст в правій частині
             user.Location = new Point(this.ClientSize.Width - user.Width, 0);
-            label1.AutoSize = true;          
+            label1.AutoSize = true;
             // Встановлюємо властивості для автоматичної зміни розміру
             dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dataGridView1.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells;
@@ -278,7 +278,7 @@ namespace ВКР
             // Перетворимо числове значення в рядок для фільтрації
             if (e.RowIndex >= 0)
             {
-                DataGridViewRow row = dataGridView1.Rows[e.RowIndex];              
+                DataGridViewRow row = dataGridView1.Rows[e.RowIndex];
                 idtovarTextBox.Text = row.Cells["ID_товару"].Value.ToString();
                 idpokupkaTextBox.Text = row.Cells["ID_покупки"].Value.ToString();
                 kvoTextBox.Text = row.Cells["Кількість"].Value.ToString();
@@ -363,7 +363,7 @@ namespace ВКР
             {
                 MessageBox.Show("Будь ласка, коректно заповніть всі поля.", "Помилка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
-            }           
+            }
 
             string query = "INSERT INTO Зміст_реалізації (ID_товару, ID_покупки, Кількість) VALUES (@ID_товару, @ID_покупки, @Кількість)";
 
@@ -486,45 +486,83 @@ namespace ВКР
 
         private void DeleteButton_Click(object sender, EventArgs e)
         {
-            if (dataGridView1.SelectedRows.Count == 0 || dataGridView1.SelectedRows[0].Cells["ID_зміст_реал"].Value == null)
+            // Перевіряємо, чи обраний запис і чи не є виділені осередки порожніми
+            if (dataGridView1.SelectedRows.Count == 0 || dataGridView1.SelectedRows[0].Cells["ID_покупки"].Value == null || dataGridView1.SelectedRows[0].Cells["Кількість"].Value == null || dataGridView1.SelectedRows[0].Cells["ID_товару"].Value == null)
             {
                 MessageBox.Show("Будь ласка, оберіть запис для видалення.", "Помилка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
-            int zmistRealId = (int)dataGridView1.SelectedRows[0].Cells["ID_зміст_реал"].Value;
+            int zmistRealId = (int)dataGridView1.SelectedRows[0].Cells["ID"].Value;
+            int purchaseId = (int)dataGridView1.SelectedRows[0].Cells["ID_покупки"].Value;
 
-            string query = "DELETE FROM Зміст_реалізації WHERE [ID_зміст_реал] = @ZmistRealId";
-
-            DialogResult result = MessageBox.Show("Ви дійсно хочете видалити цей запис?", "Підтвердження видалення", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-
-            if (result == DialogResult.Yes)
+            try
             {
-                try
-                {
-                    dbHelper.OpenConnection();
+                dbHelper.OpenConnection();
 
-                    using (SqlConnection connection = new SqlConnection(dbHelper.GetConnection().ConnectionString))
+                using (SqlConnection connection = new SqlConnection(dbHelper.GetConnection().ConnectionString))
+                {
+                    connection.Open();
+
+                    // Перевіряємо кількість записів у таблиці "Зміст реалізації" з таким же ID_покупки
+                    string countZmistRealizatsiyiQuery = "SELECT COUNT(*) FROM Зміст_реалізації WHERE [ID_покупки] = @PurchaseId";
+                    int count;
+                    using (SqlCommand countZmistRealizatsiyiCmd = new SqlCommand(countZmistRealizatsiyiQuery, connection))
                     {
-                        connection.Open();
-                        SqlCommand cmd = new SqlCommand(query, connection);
-                        cmd.Parameters.AddWithValue("@ZmistRealId", zmistRealId);
-                        cmd.ExecuteNonQuery();
+                        countZmistRealizatsiyiCmd.Parameters.AddWithValue("@PurchaseId", purchaseId);
+                        count = (int)countZmistRealizatsiyiCmd.ExecuteScalar();
                     }
 
-                    MessageBox.Show("Запис успішно видалено.", "Інформація", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    LoadData();
-                    dataGridView1.ClearSelection();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Помилка при видаленні запису : " + ex.Message, "Помилка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-                finally
-                {
-                    dbHelper.CloseConnection();
+                    string deleteMessage = (count > 1) ? "Ви дійсно хочете видалити цей запис?" : "Ви дійсно хочете видалити цей запис? Якщо ви видалите цей запис, всі зв'язані записи теж будуть видалені!";
+
+                    DialogResult result = MessageBox.Show(deleteMessage, "Підтвердження видалення", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                    // Якщо користувач погодився видалити запис
+                    if (result == DialogResult.Yes)
+                    {
+                        // Якщо кількість записів більше 1, видаляємо лише поточний запис із таблиці "Зміст реалізації"
+                        if (count > 1)
+                        {
+                            string deleteZmistRealizatsiyiQuery = "DELETE FROM Зміст_реалізації WHERE [ID_зміст_реал] = @ZmistRealId";
+                            using (SqlCommand deleteZmistRealizatsiyiCmd = new SqlCommand(deleteZmistRealizatsiyiQuery, connection))
+                            {
+                                deleteZmistRealizatsiyiCmd.Parameters.AddWithValue("@ZmistRealId", zmistRealId);
+                                deleteZmistRealizatsiyiCmd.ExecuteNonQuery();
+                            }
+                        }
+                        // Інакше, якщо це останній запис з таким ID_покупки, видаляємо поточний запис та зв'язковий запис у таблиці "Реалізація"
+                        else
+                        {
+                            string deleteZmistRealizatsiyiQuery = "DELETE FROM Зміст_реалізації WHERE [ID_зміст_реал] = @ZmistRealId";
+                            using (SqlCommand deleteZmistRealizatsiyiCmd = new SqlCommand(deleteZmistRealizatsiyiQuery, connection))
+                            {
+                                deleteZmistRealizatsiyiCmd.Parameters.AddWithValue("@ZmistRealId", zmistRealId);
+                                deleteZmistRealizatsiyiCmd.ExecuteNonQuery();
+                            }
+
+                            string deleteRealizatsiyaQuery = "DELETE FROM Реалізація WHERE ID_покупки = @PurchaseId";
+                            using (SqlCommand deleteRealizatsiyaCmd = new SqlCommand(deleteRealizatsiyaQuery, connection))
+                            {
+                                deleteRealizatsiyaCmd.Parameters.AddWithValue("@PurchaseId", purchaseId);
+                                deleteRealizatsiyaCmd.ExecuteNonQuery();
+                            }
+                        }
+
+                        MessageBox.Show("Запис успішно видалено.", "Інформація", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        LoadData();
+                        LoadRealData();
+                        dataGridView1.ClearSelection();
+                    }
                 }
             }
-        }       
+            catch (Exception ex)
+            {
+                MessageBox.Show("Помилка при видаленні запису : " + ex.Message, "Помилка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                dbHelper.CloseConnection();
+            }
+        }
     }
 }
